@@ -1,0 +1,116 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.response-box-container {
+  height: 1000px;
+  width: 1000px;
+  display: flex;
+  flex-direction: column;
+}
+
+.response-box {
+  height: 100%;
+  width: 100%;
+  background-color: rgb(35, 34, 34);
+  text-align: left;
+  padding-left: 15px;
+  color: wheat;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  box-sizing: border-box;
+  border-radius: 10px;
+  /* Firefox properties */
+  scrollbar-width: thin; 
+  scrollbar-color: rgba(245, 222, 179, 0.3) transparent;
+}
+
+/* 2. Webkit Scrollbar Styling (Chrome, Edge, Safari) */
+
+/* Sets the width of the entire scrollbar */
+.response-box::-webkit-scrollbar {
+  width: 8px; 
+}
+
+/* Styles the track (the area the scrollbar moves within) */
+.response-box::-webkit-scrollbar-track {
+  background: transparent; 
+  border-radius: 10px;
+}
+
+/* Styles the thumb (the draggable part) */
+.response-box::-webkit-scrollbar-thumb {
+  background-color: rgba(245, 222, 179, 0.3); /* Muted wheat color to match your text */
+  border-radius: 10px; /* Gives it smooth, rounded pill-like edges */
+}
+
+/* Makes the thumb slightly brighter when hovered over */
+.response-box::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(245, 222, 179, 0.5); 
+}
+
+.response-box::-webkit-scrollbar-button {
+  display: none;
+}
+
+textarea {
+  width: 100%;
+  /* Prevents it from overflowing if you add padding later */
+  box-sizing: border-box; 
+
+  /* 2. Removes the drag-to-resize handle in the bottom right corner */
+  resize: none; 
+
+  /* 3. Removes the default blue/black highlight ring when clicked */
+  outline: none; 
+
+  font-family: inherit;
+
+}
+
+textarea::placeholder {
+  font-family: inherit;
+}
+
+.chatbox {
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(35, 34, 34);
+  overflow: auto;
+  height: 200px;
+  width: 400px;
+  color: wheat;
+  text-align: left;
+  padding-left: 15px;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+
+.chatbox-container {
+  display: flex;
+  flex-direction: column;
+  
+  /* This breaks the chatbox out of the normal page flow */
+  position: fixed; 
+  
+  /* Pins it 20 pixels from the bottom edge of the screen */
+  bottom: 20px;    
+  
+  /* Pins it 20 pixels from the right edge. 
+     Change this to 'left: 20px;' if you want it on the bottom left! */
+  left: 20px;     
+  
+  /* Ensures the chatbox sits on top of other elements if the screen gets small */
+  z-index: 100;    
+}
+
