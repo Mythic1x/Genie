@@ -15,7 +15,7 @@ const tempState: PublicGameState = {
 }
 
 
-function Akinator({ gameId, playerName }: { gameId: string, playerName: string }) {
+function Akinator() {
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['game'],
     queryFn: () => fetch(`http://${window.location.hostname}:5001/game/${gameId}`).then(res => res.status)
