@@ -16,7 +16,7 @@ const indexRoute = createRoute({
     component: App
 })
 
-const gameRoute = createRoute({
+export const gameRoute = createRoute({
     getParentRoute: () => rootRoute,
     "path": "/game/$gameId",
     component: Akinator,

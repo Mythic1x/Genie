@@ -82,7 +82,7 @@ export class Game {
     timeIntervalId: NodeJS.Timeout
     chatMessages: string[]
     akinator: Akinator
-    constructor(players: Player[], state: typeof this.state, character: string) {
+    constructor(players: Player[], state: "ongoing" | "ended" | "paused", character: string) {
         this.players = players
         this.state = state
         this.timeElapsed = 0

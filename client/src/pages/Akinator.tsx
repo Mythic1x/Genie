@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import type { PublicGameState, PlayerData, StrippedPlayerData, GameMessage, ServerMessage, ClientMessage } from '../../index'
 import Message from '../components/message'
 
-import './App.css'
+
+import '../App.css'
 import InputBox from '../components/TextBox'
 import useWebSocket, { ReadyState } from 'react-use-websocket'
+import { gameRoute } from '../routing'
 
 const tempState: PublicGameState = {
   "chatMessages": [],
@@ -14,8 +16,8 @@ const tempState: PublicGameState = {
   "timeElapsed": 0
 }
 
-
 function Akinator() {
+  const { gameId } = gameRoute.useParams()
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['game'],
     queryFn: () => fetch(`http://${window.location.hostname}:5001/game/${gameId}`).then(res => res.status)
@@ -39,7 +41,7 @@ function Akinator() {
       <span className="lost">You are lost</span>
     )
   }
-
+  const playerName = sessionStorage.getItem("playerName") ?? "Unknown"
   const [notifications, setNotifications] = useState<string[]>([])
   const [pageErrors, setErrors] = useState<string[]>([])
   const [akiHistory, setAkiHistory] = useState<string[]>([])
@@ -63,7 +65,7 @@ function Akinator() {
     }
   }, [readyState])
 
- useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setNotifications(prev => {
         if (prev.length > 3) {
@@ -77,7 +79,7 @@ function Akinator() {
 
   useEffect(() => {
     const message = lastJsonMessage as ServerMessage
-    if(!message) return
+    if (!message) return
     switch (message.type) {
       case "aki-response":
         setAkiHistory(prev => [...prev, message.message])
@@ -112,7 +114,7 @@ function Akinator() {
             ))}
           </div>
           <div className="input-container">
-            <InputBox handleSubmit={submitAkinator} placeholder='type your guess' />
+            <InputBox placeholder='type your guess' />
           </div>
         </div>
       </div>
@@ -123,7 +125,7 @@ function Akinator() {
           ))}
         </div>
         <div className="chatbox-input">
-          <InputBox handleSubmit={submitChat} placeholder='type your message' />
+          <InputBox placeholder='type your message' />
         </div>
       </div>
     </>

@@ -28,7 +28,7 @@ router.get("/create-game/:category", async (req, res) => {
     }
     const game = new Game([], "ongoing", character)
     lobbies[gameId] = { game: game }
-    return res.status(200).send("Game created")
+    return res.status(200).send(gameId)
 })
 
 router.get("/game/:gameId", async (req, res) => {
