@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation} from "@tanstack/react-query"
 import "./App.css"
 import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
@@ -28,7 +28,7 @@ function App() {
                 <span className="loading">Creating Game...</span>
             }
             {createGameMutation.isError &&
-                <span className="error">"Something went wrong while creating game</span>
+                <span className="error">Something went wrong while creating the game</span>
             }
             <h1 className="select-category">Select the Category</h1>
             <input type="text" placeholder="Select your name" className="name-selection" value={name} onChange={(e) => setName(e.target.value)} />

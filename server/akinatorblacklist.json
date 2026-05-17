@@ -1,10 +1,8 @@
 {
     "standard": [
+        "Optimus Prime"
     ],
-    "humans": [
-    ],
-    "animals": [
-    ],
-    "things": [
-    ]
+    "humans": [],
+    "animals": [],
+    "things": []
 }

@@ -23,24 +23,7 @@ function Akinator() {
     queryFn: () => fetch(`http://${window.location.hostname}:5001/game/${gameId}`).then(res => res.status)
   })
 
-  if (isPending) {
-    return (
-      <span className="load">Loading...</span>
-    )
-  }
-
-  if (isError) {
-    console.error(`${error.name}\n${error.cause}\n${error.stack}`)
-    return (
-      <span className="error">{error.message}</span>
-    )
-  }
-
-  if (data === 404) {
-    return (
-      <span className="lost">You are lost</span>
-    )
-  }
+ 
   const playerName = sessionStorage.getItem("playerName") ?? "Unknown"
   const [notifications, setNotifications] = useState<string[]>([])
   const [pageErrors, setErrors] = useState<string[]>([])
@@ -102,7 +85,24 @@ function Akinator() {
     }
   }, [lastJsonMessage])
 
+ if (isPending) {
+    return (
+      <span className="load">Loading...</span>
+    )
+  }
 
+  if (isError) {
+    console.error(`${error.name}\n${error.cause}\n${error.stack}`)
+    return (
+      <span className="error">{error.message}</span>
+    )
+  }
+
+  if (data === 404) {
+    return (
+      <span className="lost">You are lost</span>
+    )
+  }
   return (
     <>
       <h1 className="header">Akinator</h1>

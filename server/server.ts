@@ -1,15 +1,11 @@
-import { Chat } from '@google/genai'
+import 'dotenv/config'
 import WebSocketServer from 'ws'
-import { Akinator } from './akinator'
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { lobbies, ClientMessage, Player } from './game';
 import router from './routes';
 
-
-const geminiKey = process.env.GEMINI_API_KEY
-const akinator = new Akinator()
 
 const app = express();
 app.use(cors());
