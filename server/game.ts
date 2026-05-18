@@ -82,7 +82,10 @@ export class Game {
     timeIntervalId: NodeJS.Timeout
     chatMessages: string[]
     akinator: Akinator
-    constructor(players: Player[], state: "ongoing" | "ended" | "paused", character: string) {
+    id: string
+    deletionTimeout: NodeJS.Timeout | null
+    cleanupInterval: NodeJS.Timeout
+    constructor(players: Player[], state: "ongoing" | "ended" | "paused", character: string, id: string) {
         this.players = players
         this.state = state
         this.timeElapsed = 0
@@ -94,6 +97,11 @@ export class Game {
         }, 1000)
         this.chatMessages = []
         this.akinator = akinator
+        this.id = id
+        this.deletionTimeout = null
+        this.cleanupInterval = setInterval(() => {
+            this.checkForCleanup()
+        }, 60000)
     }
 
     getState(): PublicGameState {
@@ -102,6 +110,24 @@ export class Game {
             timeElapsed: this.timeElapsed,
             players: this.players.map(p => ({ name: p.name, guessCounter: p.guessCounter })),
             chatMessages: this.chatMessages
+        }
+    }
+
+    getActiveConnections() {
+        let activeConnections = 0
+        for (const player of this.players) {
+            if (player.ws.readyState === WebSocket.OPEN) activeConnections++
+        }
+        return activeConnections
+    }
+
+    checkForCleanup() {
+        if (this.getActiveConnections() < 1) {
+            this.deletionTimeout = setTimeout(() => {
+                clearInterval(this.cleanupInterval)
+                clearInterval(this.timeIntervalId)
+                delete lobbies[this.id]
+            }, 60000)
         }
     }
 
@@ -116,8 +142,12 @@ export class Game {
     }
 
     endGame() {
-    this.state = "ended";
-    clearInterval(this.timeIntervalId)
-}
+        this.state = "ended";
+        clearInterval(this.timeIntervalId)
+        clearInterval(this.cleanupInterval)
+        setTimeout(() => {
+            delete lobbies[this.id]
+        }, 60000 * 2)
+    }
 
 }

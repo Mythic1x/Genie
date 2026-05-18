@@ -26,7 +26,7 @@ router.get("/create-game/:category", async (req, res) => {
     if (character.toLowerCase().startsWith("error")) {
         return res.status(500).send("Error generating game")
     }
-    const game = new Game([], "ongoing", character)
+    const game = new Game([], "ongoing", character, gameId)
     lobbies[gameId] = { game: game }
     return res.status(200).send(gameId)
 })

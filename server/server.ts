@@ -20,11 +20,13 @@ wss.on("connection", (ws, req) => {
         ws.close()
     }, 121000)
 
+    let connectedGameId: string | null = null
+
 
     ws.on("close", () => {
         clearTimeout(timeout)
-        for (const lobby in lobbies) {
-            const game = lobbies[lobby].game
+        if (connectedGameId && lobbies[connectedGameId]) {
+            const game = lobbies[connectedGameId]?.game
             if (game.state !== "ended") {
                 const player = game.players.find(p => p.ip === req.socket.remoteAddress)
                 if (player) {
@@ -42,6 +44,7 @@ wss.on("connection", (ws, req) => {
             console.log(err)
             return
         }
+
         switch (m.action) {
             //Heartbeat to Ensure Alive Connections
             case 'heartbeat': {
@@ -55,6 +58,11 @@ wss.on("connection", (ws, req) => {
             case 'connect': {
                 const game = lobbies[m.gameId]?.game
                 if (!game) return
+                connectedGameId = m.gameId
+                if (game.deletionTimeout) {
+                    clearTimeout(game.deletionTimeout)
+                }
+
                 const existingPlayer = game.players.find(p => p.ip === req.socket.remoteAddress)
 
                 if (existingPlayer) {
