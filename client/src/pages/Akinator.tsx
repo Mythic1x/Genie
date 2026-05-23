@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { PublicGameState, PlayerData, StrippedPlayerData, ServerMessage, ClientMessage, Message, MessageHolder } from '../../index'
 import MessageComponent from '../components/message'
@@ -8,6 +8,7 @@ import '../App.css'
 import InputBox from '../components/TextBox'
 import useWebSocket, { ReadyState } from 'react-use-websocket'
 import { gameRoute } from '../routing'
+import PageNotification from '../components/Notification'
 
 const tempState: PublicGameState = {
   "chatMessages": [],
@@ -63,10 +64,19 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
   const [player, setPlayer] = useState<PlayerData>()
   const [messageQueue, setMessageQueue] = useState<MessageHolder>({})
   const [chatMessageQueue, setChatMessageQueue] = useState<MessageHolder>({})
+  const akiEndRef = useRef<HTMLDivElement>(null)
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(`ws://${window.location.hostname}:5001`, {
     share: true,
   })
+
+  useEffect(() => {
+    akiEndRef.current?.scrollIntoView({ behavior: "smooth" })
+
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
+
+  }, [akiHistory, messageQueue, chatHistory, chatMessageQueue])
 
   useEffect(() => {
     if (readyState === ReadyState.OPEN) {
@@ -83,10 +93,7 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
   useEffect(() => {
     const interval = setInterval(() => {
       setNotifications(prev => {
-        if (prev.length > 3) {
-          return prev.slice(1)
-        }
-        return prev
+        return prev.slice(1)
       })
     }, 3000)
     return () => clearInterval(interval)
@@ -231,16 +238,20 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
 
   return (
     <>
+      <div className="notifications">{notifications.map((n) => (
+        <PageNotification message={n} />
+      ))}</div>
       <h1 className="header">Akinator</h1>
       <div className="game-container">
         <div className="response-box-container">
           <div className="response-box">
             {Object.values(akiHistory).sort((a, b) => a.timestamp - b.timestamp).map(m => (
-              <MessageComponent message={m} />
+              <MessageComponent message={m} key={m.id} />
             ))}
             {Object.values(messageQueue).sort((a, b) => a.timestamp - b.timestamp).map(m => (
-              <MessageComponent message={m} />
+              <MessageComponent message={m} key={m.id} />
             ))}
+            <div ref={akiEndRef} />
           </div>
           <div className="input-container">
             <InputBox placeholder='type your guess' handleSubmit={akinatorMessageSubmit} />
@@ -250,11 +261,12 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
       <div className="chatbox-container">
         <div className="chatbox">
           {Object.values(chatHistory).sort((a, b) => a.timestamp - b.timestamp).map(m => (
-            <MessageComponent message={m} />
+            <MessageComponent message={m} key={m.id} />
           ))}
           {Object.values(chatMessageQueue).sort(((a, b) => a.timestamp - b.timestamp)).map(m => (
-            <MessageComponent message={m} />
+            <MessageComponent message={m} key={m.id} />
           ))}
+          <div ref={chatEndRef} />
         </div>
         <div className="chatbox-input">
           <InputBox placeholder='type your message' handleSubmit={chatMessageSubmit} />

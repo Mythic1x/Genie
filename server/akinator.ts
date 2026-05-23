@@ -1,4 +1,4 @@
-import { Chat, GoogleGenAI, Modality, ThinkingLevel } from "@google/genai";
+import { ApiError, Chat, GoogleGenAI, Modality, ThinkingLevel } from "@google/genai";
 import fs from 'fs'
 import { akiCategories } from "./akinatorcategories"
 const akiCharacters: Record<string, string[]> = JSON.parse(fs.readFileSync("./akinatorblacklist.json", 'utf-8'))
@@ -16,7 +16,7 @@ export class Akinator {
             `Think of any entity from the category: ${randomCategory}.
             Your response MUST be the specific name of the entity and ONLY the name, nothing else.
             IMPORTANT: You are NOT allowed to pick ANY entity from this list: ${blacklist.join(", ")}`,
-            
+
             `Think of any entity from the category: ${randomCategory}.
             Your choice should NOT be the most generic or obvious option, but should also not be impossible to guess.
             Your response MUST be the specific name of the entity and ONLY the name, nothing else.
@@ -35,21 +35,26 @@ export class Akinator {
                     topP: 0.95,
                 },
             });
-            
+
             if (!charResponse.text) return await this.prompt(category, attempts + 1)
-                
-                const character = charResponse.text.trim()
-                if (blacklist.length >= 200) {
-                    blacklist.pop()
-                }
-                blacklist.unshift(character)
-                await fs.promises.writeFile('./akinatorblacklist.json', JSON.stringify(akiCharacters, null, 4), 'utf-8');
-                
-                return charResponse.text.trim()
-                
-            } catch (err: any) {
-                console.log(err)
-                console.log("retrying...")
+
+            const character = charResponse.text.trim()
+            if (blacklist.length >= 200) {
+                blacklist.pop()
+            }
+            blacklist.unshift(character)
+            await fs.promises.writeFile('./akinatorblacklist.json', JSON.stringify(akiCharacters, null, 4), 'utf-8');
+
+            return charResponse.text.trim()
+
+        } catch (err: any) {
+            console.log(err.toString())
+            const error = err as ApiError
+            if (error.status === 429) {
+                console.log("rate limited")
+                return "Error: Rate Limited"
+            }
+            console.log("retrying...")
             return await this.prompt(category, attempts + 1)
         }
     }
@@ -60,12 +65,19 @@ export class Akinator {
         }
         try {
             const response = await chat.sendMessage({ message: guess })
+
             if (!response.text) {
                 return await this.guess(guess, chat, attempts + 1)
             }
+
             return response.text
         } catch (err: any) {
             console.log(err.toString())
+            const error = err as ApiError
+            if (error.status === 429) {
+                console.log("rate limited")
+                return "Error: Rate Limited"
+            }
             return await this.guess(guess, chat, attempts + 1)
         }
     }

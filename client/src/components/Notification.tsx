@@ -1,9 +1,9 @@
 import "../App.css"
 
-function Notification({message}: {message: string}) {
+function PageNotification({message}: {message: string}) {
     return (
         <span className="notification">{message}</span>
     )
 }
 
-export default Notification
+export default PageNotification

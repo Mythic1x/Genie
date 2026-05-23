@@ -176,3 +176,18 @@ div.home-page-container {
 .message-error {
   color: red
 }
+
+.notifications {
+  position: absolute;
+  top: 35%;
+  left: 75%;
+  font-size: 26px;
+  animation-name: fadeIn;
+  animation-duration: 1s;
+  animation-timing-function: ease-in
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
