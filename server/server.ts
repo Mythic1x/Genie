@@ -3,7 +3,7 @@ import WebSocketServer from 'ws'
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import { lobbies, ClientMessage, Player } from './game';
+import { lobbies, ClientMessage, Player, AkiMessage } from './game';
 import router from './routes';
 
 
@@ -69,6 +69,7 @@ wss.on("connection", (ws, req) => {
                     if (existingPlayer.ws.readyState === WebSocket.CLOSED) {
                         existingPlayer.ws = ws
                         existingPlayer.sendToPlayer({ "type": 'player-data', data: existingPlayer.sanitize() })
+                        existingPlayer.sendToPlayer({ "type": "state-update", "gameState": game.getState() })
                         game.broadcastToPlayers({ type: "notification", message: `${existingPlayer.name} reconnected` })
                     }
                 } else {
@@ -81,6 +82,7 @@ wss.on("connection", (ws, req) => {
                     player.chat = chat
                     game.players.push(player)
                     player.sendToPlayer({ "type": 'player-data', data: player.sanitize() })
+                    player.sendToPlayer({ "type": "state-update", "gameState": game.getState() })
                     game.broadcastToPlayers({ type: "notification", message: `${player.name} connected` })
                 }
                 break
@@ -89,7 +91,11 @@ wss.on("connection", (ws, req) => {
             case "chat": {
                 const game = lobbies[m.gameId]?.game
                 if (!game) return
-                game.broadcastToPlayers({ type: "chat-message", "message": m.message })
+                const player = game.players.find(p => p.ip === req.socket.remoteAddress)
+                if (!player) return
+                player.sendToPlayer({ type: "message-received", context: "chat", messageId: m.message.id })
+                game.broadcastToPlayers({ type: "chat-message", "message": {...m.message, status: "sent"} })
+                game.chatMessages[m.message.id] = {...m.message, "status": "sent"}
                 break
             }
             //Player Guessing
@@ -102,13 +108,21 @@ wss.on("connection", (ws, req) => {
                     player.sendToPlayer({ "type": "error", "message": "No active chat" })
                 }
                 else {
-                    const response = await game.akinator.guess(m.guess, player.chat, 0)
+                    player.sendToPlayer({ type: "message-received", context: "akinator", messageId: m.guess.id })
+                    const response = await game.akinator.guess(m.guess.content, player.chat, 0)
                     if (response.startsWith("Error")) {
                         player.sendToPlayer({ "type": "error", "message": response })
                     } else {
-                        player.sendToPlayer({ "type": "aki-response", message: response })
-                        player.gameHistory.push({ sender: "player", content: m.guess })
-                        player.gameHistory.push({ sender: "ai", content: response })
+                        const akiRes: AkiMessage = {
+                            sender: "Aki",
+                            content: response,
+                            id: Math.floor(Math.random() * 1000000),
+                            status: "sent",
+                            timestamp: Date.now()
+                        }
+                        player.sendToPlayer({ "type": "aki-response", message: akiRes })
+                        player.gameHistory[m.guess.id] = { ...m.guess, "status": "sent" }
+                        player.gameHistory[akiRes.id] = akiRes
                         player.guessCounter++
                         if (response.toLowerCase().startsWith("yes it is")) {
                             game.broadcastToPlayers({ "type": "notification", "message": `${player.name} guessed ${game.character} and won!` })

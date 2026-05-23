@@ -10,14 +10,14 @@ export class Player {
     ip: string | undefined
     chat: Chat | undefined
     guessCounter: number
-    gameHistory: GameMessage[]
+    gameHistory: MessageHolder
 
     constructor(name: string, ws: WebSocket, ip: string | undefined) {
         this.name = name
         this.ws = ws
         this.ip = ip
         this.guessCounter = 0
-        this.gameHistory = []
+        this.gameHistory = {}
     }
 
     sendToPlayer(message: ServerMessage) {
@@ -35,16 +35,12 @@ export interface Lobby {
     game: Game
 }
 
-export interface GameMessage {
-    sender: "ai" | "player"
-    content: string
-}
 
 export interface PublicGameState {
     state: "ongoing" | "ended" | "paused"
     timeElapsed: number
     players: StrippedPlayerData[]
-    chatMessages: string[]
+    chatMessages: MessageHolder
 }
 
 export interface StrippedPlayerData {
@@ -54,25 +50,42 @@ export interface StrippedPlayerData {
 
 export interface PlayerData {
     name: string
-    gameHistory: GameMessage[]
+    gameHistory: MessageHolder
     guessCounter: number
 }
+//chat messages
+export type MessageHolder = Record<number, Message>
+export interface Message {
+  sender: string
+  id: number
+  content: string
+  status: "sent" | "error"
+  timestamp: number
+}
 
+export interface AkiMessage {
+    sender: string
+    content: string
+    id: number
+    status: "sent"
+    timestamp: number
+}
 
 export type ClientMessage =
-    { action: "guess", guess: string, player: string, "gameId": string }
+    { action: "guess", guess: Message, player: string, "gameId": string }
     | { action: "reconnect", "gameId": string, player: string }
     | { action: "connect", "gameId": string, player: string }
-    | { action: "chat", "message": string, player: string, "gameId": string }
+    | { action: "chat", "message": Message, player: string, "gameId": string }
     | { action: "heartbeat" }
 
 export type ServerMessage =
     { type: "state-update", gameState: PublicGameState }
     | { type: "notification", message: string }
-    | { type: "chat-message", message: string }
+    | { type: "chat-message", message: Message }
     | { type: "error", "message": string }
-    | { type: "aki-response", "message": string }
+    | { type: "aki-response", "message": AkiMessage }
     | { type: "player-data", data: PlayerData }
+    | {type: "message-received", "messageId": number, "context": "chat" | "akinator" }
 
 export class Game {
     players: Player[]
@@ -80,7 +93,7 @@ export class Game {
     timeElapsed: number
     character: string
     timeIntervalId: NodeJS.Timeout
-    chatMessages: string[]
+    chatMessages: MessageHolder
     akinator: Akinator
     id: string
     deletionTimeout: NodeJS.Timeout | null
@@ -95,7 +108,7 @@ export class Game {
                 this.timeElapsed++
             }
         }, 1000)
-        this.chatMessages = []
+        this.chatMessages = {}
         this.akinator = akinator
         this.id = id
         this.deletionTimeout = null

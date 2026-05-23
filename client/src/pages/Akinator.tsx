@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import type { PublicGameState, PlayerData, StrippedPlayerData, GameMessage, ServerMessage, ClientMessage } from '../../index'
-import Message from '../components/message'
+import type { PublicGameState, PlayerData, StrippedPlayerData, ServerMessage, ClientMessage, Message, MessageHolder } from '../../index'
+import MessageComponent from '../components/message'
 
 
 import '../App.css'
@@ -51,14 +51,18 @@ function Akinator() {
 
 }
 
+
+
 function AkinatorGameRoom({ gameId }: { gameId: string }) {
   const playerName = sessionStorage.getItem("playerName") ?? "Unknown"
   const [notifications, setNotifications] = useState<string[]>([])
   const [pageErrors, setErrors] = useState<string[]>([])
-  const [akiHistory, setAkiHistory] = useState<string[]>([])
-  const [chatHistory, setChatHistory] = useState<string[]>([])
+  const [akiHistory, setAkiHistory] = useState<MessageHolder>({})
+  const [chatHistory, setChatHistory] = useState<MessageHolder>({})
   const [gameState, setGameState] = useState<PublicGameState>(tempState)
   const [player, setPlayer] = useState<PlayerData>()
+  const [messageQueue, setMessageQueue] = useState<MessageHolder>({})
+  const [chatMessageQueue, setChatMessageQueue] = useState<MessageHolder>({})
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(`ws://${window.location.hostname}:5001`, {
     share: true,
@@ -93,16 +97,30 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
     if (!message) return
     switch (message.type) {
       case "aki-response":
-        setAkiHistory(prev => [...prev, message.message])
+        setAkiHistory(prev => ({ ...prev, [message.message.id]: message.message }))
         break
       case "chat-message":
-        setChatHistory(prev => [...prev, message.message])
+        const incomingChat: Message = { ...message.message, status: "sent" }
+        setChatHistory(prev => ({ ...prev, [incomingChat.id]: incomingChat }))
+
+        setChatMessageQueue(prev => {
+          const msgInQueue = prev[incomingChat.id]
+
+          if (!msgInQueue) return prev
+
+          clearTimeout(msgInQueue.timeout)
+          const newQueue = { ...prev }
+          delete newQueue[incomingChat.id]
+          return newQueue
+        })
         break
       case "state-update":
         setGameState(message.gameState)
+        setChatHistory(message.gameState.chatMessages)
         break
       case "player-data":
         setPlayer(message.data)
+        setAkiHistory(message.data.gameHistory)
         break
       case "error":
         setErrors(prev => [...prev, message.message])
@@ -110,8 +128,106 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
       case "notification":
         setNotifications(prev => [...prev, message.message])
         break
+      case "message-received":
+        if (message.context === "akinator") {
+          setMessageQueue(prevQueue => {
+            const msg = prevQueue[message.messageId]
+
+            if (!msg) return prevQueue
+
+            clearTimeout(msg.timeout)
+
+            const updatedMsg: Message = { ...msg, status: "sent" }
+
+            setAkiHistory(prevAki => ({ ...prevAki, [message.messageId]: updatedMsg }))
+
+            const newQueue = { ...prevQueue }
+            delete newQueue[message.messageId]
+            return newQueue
+          })
+        }
+        break
+
+
     }
   }, [lastJsonMessage])
+
+  function akinatorMessageSubmit(text: string) {
+    const messageId = Math.floor(Math.random() * 1000000)
+    const msg: Message = {
+      id: messageId,
+      sender: playerName,
+      content: text,
+      status: "sending",
+      timestamp: Date.now()
+    }
+
+    const timeout = setTimeout(() => {
+      setMessageQueue(prevQueue => {
+        const existingMsg = prevQueue[messageId]
+
+        if (!existingMsg) return prevQueue
+
+        return {
+          ...prevQueue,
+          [messageId]: { ...existingMsg, status: "error" }
+        }
+      })
+    }, 60000)
+
+    msg.timeout = timeout
+
+    setMessageQueue(prev => {
+      return {
+        ...prev,
+        [messageId]: msg
+      }
+    })
+
+    console.log(messageQueue)
+
+    if (Object.keys(messageQueue).length > 3) return alert("stop spamming")
+    const message: ClientMessage = { "action": "guess", "guess": msg, "player": playerName, "gameId": gameId }
+    sendJsonMessage(message)
+  }
+
+  function chatMessageSubmit(text: string) {
+    const messageId = Math.floor(Math.random() * 1000000)
+    const msg: Message = {
+      id: messageId,
+      sender: playerName,
+      content: text,
+      status: "sending",
+      timestamp: Date.now()
+    }
+
+    const timeout = setTimeout(() => {
+      setChatMessageQueue(prevQueue => {
+        const existingMsg = prevQueue[messageId]
+
+        if (!existingMsg) return prevQueue
+
+        return {
+          ...prevQueue,
+          [messageId]: { ...existingMsg, status: "error" }
+        }
+      })
+    }, 60000)
+    msg.timeout = timeout
+
+    setChatMessageQueue(prev => {
+      return {
+        ...prev,
+        [messageId]: msg
+      }
+    })
+
+    if (Object.keys(chatMessageQueue).length > 3) return alert("stop spamming")
+    const message: ClientMessage = { "action": "chat", "message": msg, "player": playerName, "gameId": gameId }
+    sendJsonMessage(message)
+  }
+
+
 
   return (
     <>
@@ -119,23 +235,29 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
       <div className="game-container">
         <div className="response-box-container">
           <div className="response-box">
-            {akiHistory.map(m => (
-              <Message message={m} />
+            {Object.values(akiHistory).sort((a, b) => a.timestamp - b.timestamp).map(m => (
+              <MessageComponent message={m} />
+            ))}
+            {Object.values(messageQueue).sort((a, b) => a.timestamp - b.timestamp).map(m => (
+              <MessageComponent message={m} />
             ))}
           </div>
           <div className="input-container">
-            <InputBox placeholder='type your guess' />
+            <InputBox placeholder='type your guess' handleSubmit={akinatorMessageSubmit} />
           </div>
         </div>
       </div>
       <div className="chatbox-container">
         <div className="chatbox">
-          {chatHistory.map(m => (
-            <Message message={m} />
+          {Object.values(chatHistory).sort((a, b) => a.timestamp - b.timestamp).map(m => (
+            <MessageComponent message={m} />
+          ))}
+          {Object.values(chatMessageQueue).sort(((a, b) => a.timestamp - b.timestamp)).map(m => (
+            <MessageComponent message={m} />
           ))}
         </div>
         <div className="chatbox-input">
-          <InputBox placeholder='type your message' />
+          <InputBox placeholder='type your message' handleSubmit={chatMessageSubmit} />
         </div>
       </div>
     </>

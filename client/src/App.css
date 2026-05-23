@@ -94,8 +94,9 @@ textarea {
   /* 2. Removes the drag-to-resize handle in the bottom right corner */
   resize: none; 
 
-  /* 3. Removes the default blue/black highlight ring when clicked */
+  /* 3. Removes the default blue/black highlight ring when clicked (euro solution)*/ 
   outline: none; 
+  &:focus-visible { outline: unset }
 
   font-family: inherit;
 
@@ -162,4 +163,16 @@ div.home-page-container {
     cursor: pointer;
     transform: scale(1.01);
   }
+}
+
+.message-sending {
+  color: grey;
+}
+
+.message {
+  color: wheat;
+}
+
+.message-error {
+  color: red
 }
