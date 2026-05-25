@@ -1,4 +1,4 @@
-import { useMutation} from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import "./App.css"
 import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
@@ -6,6 +6,7 @@ import { useNavigate } from "@tanstack/react-router"
 function App() {
     const navigate = useNavigate({ from: "/" })
     const [name, setName] = useState("")
+    const [nameNotice, setNameNotice] = useState(false)
     const createGameMutation = useMutation({
         mutationFn: async (category: string) => {
             const res = await fetch(`http://${window.location.hostname}:5001/create-game/${category}`)
@@ -30,19 +31,52 @@ function App() {
             {createGameMutation.isError &&
                 <span className="error">Something went wrong while creating the game</span>
             }
+            {nameNotice &&
+                <span>Select a Name</span>
+            }
             <h1 className="select-category">Select the Category</h1>
-            <input type="text" placeholder="Select your name" className="name-selection" value={name} onChange={(e) => setName(e.target.value)} />
+            <input type="text" placeholder="Select your name" className="name-selection" value={name} onChange={(e) => {
+                if (nameNotice) setNameNotice(false)
+                setName(e.target.value)
+            }
+            } />
             <div className="category-selection-container">
-                <div className="category" onClick={() => createGameMutation.mutate("standard")}>
+                <div className="category" onClick={() => {
+                    if (!name) {
+                        setNameNotice(true)
+                        return
+                    }
+                    createGameMutation.mutate("standard")
+                }
+                }>
                     <span className="standard">Standard</span>
                 </div>
-                <div className="category" onClick={() => createGameMutation.mutate("things")}>
+                <div className="category" onClick={() => {
+                    if (!name) {
+                        setNameNotice(true)
+                        return
+                    }
+                    createGameMutation.mutate("things")
+                }}>
                     <span className="things">Things</span>
                 </div>
-                <div className="category" onClick={() => createGameMutation.mutate("humans")}>
+                <div className="category" onClick={() => {
+                    if (!name) {
+                        setNameNotice(true)
+                        return
+                    }
+                    createGameMutation.mutate("humans")
+                }
+                }>
                     <span className="humans">Humans</span>
                 </div>
-                <div className="category" onClick={() => createGameMutation.mutate("animals")}>
+                <div className="category" onClick={() => {
+                    if (!name) {
+                        setNameNotice(true)
+                        return
+                    }
+                    createGameMutation.mutate("animals")
+                }}>
                     <span className="animals">Animals</span>
                 </div>
             </div>

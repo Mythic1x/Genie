@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import type { PublicGameState, PlayerData, StrippedPlayerData, ServerMessage, ClientMessage, Message, MessageHolder } from '../../index'
+import type { PublicGameState, PlayerData, StrippedPlayerData, ServerMessage, ClientMessage, Message, MessageHolder, } from '../../index'
 import MessageComponent from '../components/message'
 
 
@@ -9,6 +9,8 @@ import InputBox from '../components/TextBox'
 import useWebSocket, { ReadyState } from 'react-use-websocket'
 import { gameRoute } from '../routing'
 import PageNotification from '../components/Notification'
+import PageError from '../components/Error'
+import PlayerCard from '../components/PlayerCard'
 
 const tempState: PublicGameState = {
   "chatMessages": [],
@@ -17,6 +19,26 @@ const tempState: PublicGameState = {
   "timeElapsed": 0
 }
 
+
+function formatTime(totalSeconds: number): string {
+  // Floor it just in case a decimal slips through
+  const safeSeconds = Math.floor(totalSeconds);
+
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+
+  if (hours > 0) {
+    // Has hours: format as H:MM:SS
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  } else if (minutes > 0) {
+    // Under an hour: format as M:SS
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  } else {
+    // Under a minute: just show seconds
+    return `0:${seconds.toString().padStart(2, '0')}`
+  }
+}
 
 
 function Akinator() {
@@ -64,6 +86,7 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
   const [player, setPlayer] = useState<PlayerData>()
   const [messageQueue, setMessageQueue] = useState<MessageHolder>({})
   const [chatMessageQueue, setChatMessageQueue] = useState<MessageHolder>({})
+  const [timeElapsed, setTimeElapsed] = useState(0)
   const akiEndRef = useRef<HTMLDivElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
@@ -100,6 +123,16 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
   }, [])
 
   useEffect(() => {
+    if (gameState.state !== "ongoing") return;
+
+    const interval = setInterval(() => {
+      setTimeElapsed(prev => prev + 1)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [gameState.state])
+
+  useEffect(() => {
     const message = lastJsonMessage as ServerMessage
     if (!message) return
     switch (message.type) {
@@ -124,13 +157,22 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
       case "state-update":
         setGameState(message.gameState)
         setChatHistory(message.gameState.chatMessages)
+        if (timeElapsed < gameState.timeElapsed) {
+          setTimeElapsed(gameState.timeElapsed)
+        }
         break
       case "player-data":
         setPlayer(message.data)
         setAkiHistory(message.data.gameHistory)
         break
       case "error":
-        setErrors(prev => [...prev, message.message])
+        if ("messageId" in message.error.data) {
+          const id = message.error.data.messageId
+          const msg = akiHistory[id]
+          const newMsg: Message = { ...msg, "status": "error" }
+          setAkiHistory(prev => ({ ...prev, [id]: newMsg }))
+        }
+        setErrors(prev => [...prev, message.error.data.errorMessage])
         break
       case "notification":
         setNotifications(prev => [...prev, message.message])
@@ -238,10 +280,19 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
 
   return (
     <>
+      <div className="errors">{pageErrors.map(e => (
+        <PageError message={e} setErrors={setErrors} />
+      ))}</div>
       <div className="notifications">{notifications.map((n) => (
         <PageNotification message={n} />
       ))}</div>
       <h1 className="header">Akinator</h1>
+      <span className="timer">{formatTime(timeElapsed)}</span>
+      <div className="player-list">
+        <h2>Players:</h2>
+        {gameState.players.map(p => (
+          <PlayerCard playerData={p} />
+        ))}</div>
       <div className="game-container">
         <div className="response-box-container">
           <div className="response-box">

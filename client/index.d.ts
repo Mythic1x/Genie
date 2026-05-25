@@ -37,6 +37,14 @@ interface AkiMessage {
     timestamp: number
 }
 
+export interface GameError {
+    reason: string
+    data: MessageError | GenericError
+}
+
+type MessageError = { "messageId": number, errorMessage: string }
+type GenericError = { "errorMessage": string }
+
 export type ClientMessage =
     { action: "guess", guess: Message, player: string, "gameId": string }
     | { action: "reconnect", "gameId": string, player: string }
@@ -48,7 +56,7 @@ export type ServerMessage =
     { type: "state-update", gameState: PublicGameState }
     | { type: "notification", message: string }
     | { type: "chat-message", message: Message }
-    | { type: "error", "message": string }
+    | { type: "error", "error": GameError }
     | { type: "aki-response", "message": AkiMessage }
     | { type: "player-data", data: PlayerData }
     | { type: "message-received", messageId: number, "context": "akinator" | "chat" }

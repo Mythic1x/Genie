@@ -13,7 +13,7 @@
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   --background-color: #242424;
-  --secondary-background-color: rgb(35, 34, 34); 
+  --secondary-background-color: rgb(35, 34, 34);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -54,7 +54,7 @@ body {
   box-sizing: border-box;
   border-radius: 10px;
   /* Firefox properties */
-  scrollbar-width: thin; 
+  scrollbar-width: thin;
   scrollbar-color: rgba(245, 222, 179, 0.3) transparent;
 }
 
@@ -62,24 +62,26 @@ body {
 
 /* Sets the width of the entire scrollbar */
 .response-box::-webkit-scrollbar {
-  width: 8px; 
+  width: 8px;
 }
 
 /* Styles the track (the area the scrollbar moves within) */
 .response-box::-webkit-scrollbar-track {
-  background: transparent; 
+  background: transparent;
   border-radius: 10px;
 }
 
 /* Styles the thumb (the draggable part) */
 .response-box::-webkit-scrollbar-thumb {
-  background-color: rgba(245, 222, 179, 0.3); /* Muted wheat color to match your text */
-  border-radius: 10px; /* Gives it smooth, rounded pill-like edges */
+  background-color: rgba(245, 222, 179, 0.3);
+  /* Muted wheat color to match your text */
+  border-radius: 10px;
+  /* Gives it smooth, rounded pill-like edges */
 }
 
 /* Makes the thumb slightly brighter when hovered over */
 .response-box::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(245, 222, 179, 0.5); 
+  background-color: rgba(245, 222, 179, 0.5);
 }
 
 .response-box::-webkit-scrollbar-button {
@@ -89,14 +91,17 @@ body {
 textarea {
   width: 100%;
   /* Prevents it from overflowing if you add padding later */
-  box-sizing: border-box; 
+  box-sizing: border-box;
 
   /* 2. Removes the drag-to-resize handle in the bottom right corner */
-  resize: none; 
+  resize: none;
 
-  /* 3. Removes the default blue/black highlight ring when clicked (euro solution)*/ 
-  outline: none; 
-  &:focus-visible { outline: unset }
+  /* 3. Removes the default blue/black highlight ring when clicked (euro solution)*/
+  outline: none;
+
+  &:focus-visible {
+    outline: unset
+  }
 
   font-family: inherit;
 
@@ -123,19 +128,19 @@ textarea::placeholder {
 .chatbox-container {
   display: flex;
   flex-direction: column;
-  
+
   /* This breaks the chatbox out of the normal page flow */
-  position: fixed; 
-  
+  position: fixed;
+
   /* Pins it 20 pixels from the bottom edge of the screen */
-  bottom: 20px;    
-  
+  bottom: 20px;
+
   /* Pins it 20 pixels from the right edge. 
      Change this to 'left: 20px;' if you want it on the bottom left! */
-  left: 20px;     
-  
+  left: 20px;
+
   /* Ensures the chatbox sits on top of other elements if the screen gets small */
-  z-index: 100;    
+  z-index: 100;
 }
 
 .category-selection-container {
@@ -159,10 +164,13 @@ div.home-page-container {
   display: flex;
   align-items: center;
   justify-content: center;
+
   &:hover {
     cursor: pointer;
-    transform: scale(1.01);
+    transform: scale(1.1);
   }
+
+  transition: transform 0.105s ease-in-out;
 }
 
 .message-sending {
@@ -177,6 +185,67 @@ div.home-page-container {
   color: red
 }
 
+.error-container {
+  background-color: rgba(255, 0, 0, 0.267);
+  min-width: fit-content;
+  min-height: fit-content;
+  height: 50px;
+  width: 150px;
+  padding: 10px;
+  text-align: center;
+  position: relative;
+
+
+  .close {
+    cursor: pointer;
+    background: none;
+    outline: none;
+    border: none;
+    position: absolute;
+    right: 1ch;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.90);
+    }
+  }
+
+  .err {
+    font-size: 20px;
+  }
+
+  border-radius: 10px;
+}
+
+.errors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  position: absolute;
+  right: 75%;
+  bottom: 75%;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  padding: 20px;
+  background-color: var(--secondary-background-color);
+  border-radius: 15px;
+  position: absolute;
+  left: 75%;
+}
+
+.player-container {
+  display: flex;
+  font-size: 16px;
+  flex-direction: column;
+}
+
 .notifications {
   position: absolute;
   top: 35%;
@@ -188,6 +257,11 @@ div.home-page-container {
 }
 
 @keyframes fadeIn {
-  from {opacity: 0;}
-  to {opacity: 1;}
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }

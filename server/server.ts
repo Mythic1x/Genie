@@ -3,7 +3,7 @@ import WebSocketServer from 'ws'
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import { lobbies, ClientMessage, Player, AkiMessage } from './game';
+import { lobbies, ClientMessage, Player, AkiMessage, GameError, Game } from './game';
 import router from './routes';
 
 
@@ -13,6 +13,8 @@ app.use(express.json());
 app.use("/", router)
 const server = createServer(app);
 const wss = new WebSocketServer.Server({ server });
+
+
 
 
 wss.on("connection", (ws, req) => {
@@ -73,10 +75,12 @@ wss.on("connection", (ws, req) => {
                         game.broadcastToPlayers({ type: "notification", message: `${existingPlayer.name} reconnected` })
                     }
                 } else {
-                    const player = new Player(m.player, ws, req.socket.remoteAddress)
+                    const name = m.player || "Guest"
+                    const player = new Player(name, ws, req.socket.remoteAddress)
                     const chat = await game.akinator.createChat(game.character)
                     if (typeof chat === "string" || !chat) {
-                        player.sendToPlayer({ type: "error", "message": "error initalizing chat. try refreshing the page" })
+                        const error: GameError = { "reason": "Failed to initialize chat", data: { "errorMessage": "Error initializing chat. Try refreshing the page" },  }
+                        player.sendToPlayer({ type: "error", "error": error })
                         return
                     }
                     player.chat = chat
@@ -94,8 +98,8 @@ wss.on("connection", (ws, req) => {
                 const player = game.players.find(p => p.ip === req.socket.remoteAddress)
                 if (!player) return
                 player.sendToPlayer({ type: "message-received", context: "chat", messageId: m.message.id })
-                game.broadcastToPlayers({ type: "chat-message", "message": {...m.message, status: "sent"} })
-                game.chatMessages[m.message.id] = {...m.message, "status": "sent"}
+                game.broadcastToPlayers({ type: "chat-message", "message": { ...m.message, status: "sent" } })
+                game.chatMessages[m.message.id] = { ...m.message, "status": "sent" }
                 break
             }
             //Player Guessing
@@ -105,13 +109,15 @@ wss.on("connection", (ws, req) => {
                 const player = game.players.find(p => p.ip === req.socket.remoteAddress)
                 if (!player) return
                 if (!player.chat) {
-                    player.sendToPlayer({ "type": "error", "message": "No active chat" })
+                    const error: GameError = { "reason": "Chat failed", data: { "errorMessage": "No active chat" }, }
+                    player.sendToPlayer({ "type": "error", "error": error })
                 }
                 else {
                     player.sendToPlayer({ type: "message-received", context: "akinator", messageId: m.guess.id })
                     const response = await game.akinator.guess(m.guess.content, player.chat, 0)
                     if (response.startsWith("Error")) {
-                        player.sendToPlayer({ "type": "error", "message": response })
+                        const error: GameError = { "reason": "Message failed to process", data: { messageId: m.guess.id, errorMessage: response }, }
+                        player.sendToPlayer({ "type": "error", "error": error })
                     } else {
                         const akiRes: AkiMessage = {
                             sender: "Aki",
