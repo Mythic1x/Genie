@@ -5,6 +5,7 @@ export interface PublicGameState {
     timeElapsed: number
     players: StrippedPlayerData[]
     chatMessages: MessageHolder
+    winner: PlayerData | null
 }
 
 export interface StrippedPlayerData {

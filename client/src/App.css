@@ -41,6 +41,11 @@ body {
   flex-direction: column;
 }
 
+.response-boxes-container {
+  display: flex;
+  flex-direction: row;
+}
+
 .response-box {
   height: 100%;
   width: 100%;

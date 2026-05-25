@@ -42,6 +42,7 @@ export interface PublicGameState {
     timeElapsed: number
     players: StrippedPlayerData[]
     chatMessages: MessageHolder
+    winner: PlayerData | null
 }
 
 export interface StrippedPlayerData {
@@ -108,6 +109,7 @@ export class Game {
     id: string
     deletionTimeout: NodeJS.Timeout | null
     cleanupInterval: NodeJS.Timeout
+    winner: Player | null
     constructor(players: Player[], state: "ongoing" | "ended" | "paused", character: string, id: string) {
         this.players = players
         this.state = state
@@ -125,6 +127,7 @@ export class Game {
         this.cleanupInterval = setInterval(() => {
             this.checkForCleanup()
         }, 60000)
+        this.winner = null
     }
 
     getState(): PublicGameState {
@@ -132,7 +135,8 @@ export class Game {
             state: this.state,
             timeElapsed: this.timeElapsed,
             players: this.players.map(p => ({ name: p.name, guessCounter: p.guessCounter })),
-            chatMessages: this.chatMessages
+            chatMessages: this.chatMessages,
+            winner: this.winner
         }
     }
 

@@ -132,6 +132,7 @@ wss.on("connection", (ws, req) => {
                         player.guessCounter++
                         if (response.toLowerCase().startsWith("yes it is")) {
                             game.broadcastToPlayers({ "type": "notification", "message": `${player.name} guessed ${game.character} and won!` })
+                            game.winner = player
                             game.endGame()
                         }
                         game.broadcastState()

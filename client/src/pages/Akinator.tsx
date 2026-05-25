@@ -11,12 +11,14 @@ import { gameRoute } from '../routing'
 import PageNotification from '../components/Notification'
 import PageError from '../components/Error'
 import PlayerCard from '../components/PlayerCard'
+import ResponseBox from '../components/ResponseBox'
 
 const tempState: PublicGameState = {
   "chatMessages": [],
   "players": [],
   "state": "paused",
-  "timeElapsed": 0
+  "timeElapsed": 0,
+  "winner": null
 }
 
 
@@ -87,7 +89,7 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
   const [messageQueue, setMessageQueue] = useState<MessageHolder>({})
   const [chatMessageQueue, setChatMessageQueue] = useState<MessageHolder>({})
   const [timeElapsed, setTimeElapsed] = useState(0)
-  const akiEndRef = useRef<HTMLDivElement>(null)
+  const akiEndRef = useRef<HTMLDivElement>(null!)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(`ws://${window.location.hostname}:5001`, {
@@ -125,7 +127,7 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
   useEffect(() => {
     if (gameState.state !== "ongoing") return;
 
-   const interval = setInterval(() => {
+    const interval = setInterval(() => {
       setTimeElapsed(prev => prev + 1)
     }, 1000)
 
@@ -294,19 +296,22 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
           <PlayerCard playerData={p} />
         ))}</div>
       <div className="game-container">
-        <div className="response-box-container">
-          <div className="response-box">
-            {Object.values(akiHistory).sort((a, b) => a.timestamp - b.timestamp).map(m => (
-              <MessageComponent message={m} key={m.id} />
-            ))}
-            {Object.values(messageQueue).sort((a, b) => a.timestamp - b.timestamp).map(m => (
-              <MessageComponent message={m} key={m.id} />
-            ))}
-            <div ref={akiEndRef} />
-          </div>
-          <div className="input-container">
-            <InputBox placeholder='type your guess' handleSubmit={akinatorMessageSubmit} />
-          </div>
+        <div className="response-boxes-container">
+          <ResponseBox
+            akiHistory={akiHistory}
+            messageQueue={messageQueue}
+            akiEndRef={akiEndRef}
+            gameState={gameState}
+            akinatorMessageSubmit={akinatorMessageSubmit}
+          />
+          {(gameState.state === "ended" && gameState.winner && gameState.winner.name !== player?.name) &&
+          <>
+          <h2 className="winner">{gameState.winner.name}'s game</h2>
+          <ResponseBox
+              akiHistory={gameState.winner.gameHistory}
+              gameState={gameState} />
+              </>
+          }
         </div>
       </div>
       <div className="chatbox-container">
