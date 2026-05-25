@@ -288,8 +288,11 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
       <div className="notifications">{notifications.map((n) => (
         <PageNotification message={n} />
       ))}</div>
+      {gameState.winner &&
+        <h1>{gameState.winner.name} Won!!</h1>
+      }
       <h1 className="header">Akinator</h1>
-      <span className="timer">{formatTime(timeElapsed)}</span>
+      <span className="timer">{gameState.winner ? `Game ended at ${formatTime(timeElapsed)}` : formatTime(timeElapsed)}</span>
       <div className="player-list">
         <h2>Players:</h2>
         {gameState.players.map(p => (
@@ -305,12 +308,12 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
             akinatorMessageSubmit={akinatorMessageSubmit}
           />
           {(gameState.state === "ended" && gameState.winner && gameState.winner.name !== player?.name) &&
-          <>
-          <h2 className="winner">{gameState.winner.name}'s game</h2>
-          <ResponseBox
-              akiHistory={gameState.winner.gameHistory}
-              gameState={gameState} />
-              </>
+            <>
+              <h2 className="winner">{gameState.winner.name}'s game</h2>
+              <ResponseBox
+                akiHistory={gameState.winner.gameHistory}
+                gameState={gameState} />
+            </>
           }
         </div>
       </div>
