@@ -1,1 +1,3 @@
-(CLIENT NOT IMPLEMENTED YET. ONLY SERVER PROTOTYPE)
+A Game similar to Akinator except YOU are the Genie. 
+
+Supports Multiplayer
