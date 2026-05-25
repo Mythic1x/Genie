@@ -125,7 +125,7 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
   useEffect(() => {
     if (gameState.state !== "ongoing") return;
 
-    const interval = setInterval(() => {
+   const interval = setInterval(() => {
       setTimeElapsed(prev => prev + 1)
     }, 1000)
 
@@ -157,8 +157,8 @@ function AkinatorGameRoom({ gameId }: { gameId: string }) {
       case "state-update":
         setGameState(message.gameState)
         setChatHistory(message.gameState.chatMessages)
-        if (timeElapsed < gameState.timeElapsed) {
-          setTimeElapsed(gameState.timeElapsed)
+        if (timeElapsed < message.gameState.timeElapsed) {
+          setTimeElapsed(message.gameState.timeElapsed)
         }
         break
       case "player-data":

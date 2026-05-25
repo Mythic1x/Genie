@@ -9,6 +9,7 @@ function InputBox({ handleSubmit, placeholder }: Props) {
     return (
         <textarea value={text} placeholder={placeholder} onChange={(e => setText(e.target.value))} onKeyDown={(e) => {
             if (e.key === "Enter" && text) {
+                e.preventDefault()
                 handleSubmit(text.trim())
                 setText("")
             }
